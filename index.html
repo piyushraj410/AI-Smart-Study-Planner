@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Smart Study Planner</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:white;
+    min-height:100vh;
+    padding:20px;
+}
+
+.container{
+    max-width:1100px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    margin-bottom:30px;
+    font-size:45px;
+    color:#38bdf8;
+}
+
+.dashboard{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:20px;
+}
+
+.box{
+    background:rgba(30,41,59,0.9);
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 0 15px rgba(0,0,0,0.4);
+    transition:0.3s;
+}
+
+.box:hover{
+    transform:translateY(-5px);
+}
+
+h2{
+    margin-bottom:20px;
+    color:#38bdf8;
+}
+
+input,select{
+    width:100%;
+    padding:13px;
+    margin:10px 0;
+    border:none;
+    border-radius:10px;
+    font-size:16px;
+    outline:none;
+}
+
+button{
+    padding:12px 25px;
+    border:none;
+    border-radius:10px;
+    background:#38bdf8;
+    color:white;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+button:hover{
+    background:#0284c7;
+    transform:scale(1.05);
+}
+
+ul{
+    list-style:none;
+}
+
+li{
+    background:#334155;
+    margin:12px 0;
+    padding:15px;
+    border-radius:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    animation:fade 0.5s;
+}
+
+@keyframes fade{
+    from{
+        opacity:0;
+        transform:translateY(10px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+.high{
+    color:#ef4444;
+    font-weight:bold;
+}
+
+.medium{
+    color:#facc15;
+    font-weight:bold;
+}
+
+.low{
+    color:#22c55e;
+    font-weight:bold;
+}
+
+.progress-container{
+    width:100%;
+    background:#334155;
+    border-radius:20px;
+    overflow:hidden;
+    margin-top:20px;
+}
+
+.progress-bar{
+    height:30px;
+    width:0%;
+    background:linear-gradient(90deg,#22c55e,#16a34a);
+    text-align:center;
+    line-height:30px;
+    transition:0.5s;
+}
+
+.stats{
+    display:flex;
+    justify-content:space-between;
+    margin-top:15px;
+    font-size:18px;
+}
+
+.quote{
+    margin-top:15px;
+    color:#facc15;
+    font-style:italic;
+    font-size:17px;
+}
+
+.clock{
+    font-size:35px;
+    text-align:center;
+    margin-top:15px;
+    color:#22c55e;
+}
+
+.ai-box{
+    background:#0f172a;
+    padding:15px;
+    border-radius:12px;
+    margin-top:15px;
+    line-height:1.7;
+}
+
+.theme-btn{
+    float:right;
+    margin-bottom:15px;
+}
+
+.dark{
+    background:white;
+    color:black;
+}
+
+.dark .box{
+    background:#e2e8f0;
+    color:black;
+}
+
+.dark li{
+    background:#cbd5e1;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <button class="theme-btn" onclick="toggleTheme()">
+        🌙 Toggle Theme
+    </button>
+
+    <h1>📚 AI Smart Study Planner</h1>
+
+    <div class="dashboard">
+
+        <!-- Add Task -->
+        <div class="box">
+
+            <h2>Add Study Task</h2>
+
+            <input type="text" id="subject" placeholder="Enter Subject">
+
+            <input type="time" id="time">
+
+            <select id="priority">
+                <option value="High">High Priority</option>
+                <option value="Medium">Medium Priority</option>
+                <option value="Low">Low Priority</option>
+            </select>
+
+            <button onclick="addTask()">Add Task</button>
+
+            <div class="quote" id="quote">
+                💡 "Success starts with self-discipline."
+            </div>
+
+        </div>
+
+        <!-- Timetable -->
+        <div class="box">
+
+            <h2>Today's Timetable</h2>
+
+            <ul id="taskList"></ul>
+
+        </div>
+
+        <!-- Progress -->
+        <div class="box">
+
+            <h2>Study Progress</h2>
+
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar">
+                    0%
+                </div>
+            </div>
+
+            <div class="stats">
+                <span>Total: <span id="total">0</span></span>
+                <span>Completed: <span id="completed">0</span></span>
+            </div>
+
+        </div>
+
+        <!-- Clock -->
+        <div class="box">
+
+            <h2>Current Time</h2>
+
+            <div class="clock" id="clock"></div>
+
+        </div>
+
+        <!-- AI Suggestions -->
+        <div class="box">
+
+            <h2>🤖 AI Study Suggestions</h2>
+
+            <div class="ai-box" id="aiSuggestion">
+                Add subjects to get smart study suggestions.
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let completedTasks = 0;
+let totalTasks = 0;
+
+function addTask(){
+
+    let subject =
+        document.getElementById("subject").value;
+
+    let time =
+        document.getElementById("time").value;
+
+    let priority =
+        document.getElementById("priority").value;
+
+    if(subject === "" || time === ""){
+        alert("Please fill all fields");
+        return;
+    }
+
+    totalTasks++;
+
+    document.getElementById("total").innerText =
+        totalTasks;
+
+    let li = document.createElement("li");
+
+    let priorityClass = "";
+
+    if(priority === "High"){
+        priorityClass = "high";
+    }
+    else if(priority === "Medium"){
+        priorityClass = "medium";
+    }
+    else{
+        priorityClass = "low";
+    }
+
+    li.innerHTML = `
+        <div>
+            <strong>${subject}</strong><br>
+            ⏰ ${time}<br>
+            <span class="${priorityClass}">
+                ${priority} Priority
+            </span>
+        </div>
+
+        <button onclick="completeTask(this)">
+            ✅ Done
+        </button>
+    `;
+
+    document.getElementById("taskList")
+        .appendChild(li);
+
+    generateSuggestion(subject);
+
+    document.getElementById("subject").value = "";
+    document.getElementById("time").value = "";
+}
+
+function completeTask(button){
+
+    button.parentElement.remove();
+
+    completedTasks++;
+
+    document.getElementById("completed").innerText =
+        completedTasks;
+
+    let progress =
+        Math.floor((completedTasks / totalTasks) * 100);
+
+    let progressBar =
+        document.getElementById("progressBar");
+
+    progressBar.style.width = progress + "%";
+
+    progressBar.innerHTML = progress + "%";
+}
+
+function generateSuggestion(subject){
+
+    let message = "";
+
+    if(subject.toLowerCase().includes("math")){
+        message =
+        "📘 Practice formulas daily for better speed.";
+    }
+
+    else if(subject.toLowerCase().includes("java")){
+        message =
+        "💻 Write code practically to improve Java.";
+    }
+
+    else if(subject.toLowerCase().includes("physics")){
+        message =
+        "⚡ Focus more on numerical problems.";
+    }
+
+    else{
+        message =
+        "📚 Revise this subject for 30 minutes daily.";
+    }
+
+    document.getElementById("aiSuggestion")
+        .innerHTML = message;
+}
+
+function updateClock(){
+
+    let now = new Date();
+
+    let time =
+        now.toLocaleTimeString();
+
+    document.getElementById("clock")
+        .innerHTML = time;
+}
+
+setInterval(updateClock,1000);
+
+function toggleTheme(){
+
+    document.body.classList.toggle("dark");
+}
+
+</script>
+
+</body>
+</html>
